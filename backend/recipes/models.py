@@ -172,6 +172,7 @@ class Subscriptions(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='subscriptions',
         verbose_name=_('Пользователь')
     )
 
@@ -186,4 +187,4 @@ class Subscriptions(models.Model):
         verbose_name_plural = _('Подписки')
 
     def __str__(self):
-        return f'Пользователь: {self.user}'
+        return f'{self.user}'

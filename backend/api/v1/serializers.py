@@ -4,8 +4,8 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as DjoserUserSerializer
-from rest_framework import serializers
 from recipes.models import Recipe
+from rest_framework import serializers
 
 User = get_user_model()
 
@@ -40,8 +40,8 @@ class CreateUserSerializer(UserCreateSerializer):
 
 
 class UserSerializer(DjoserUserSerializer):
-    is_subscribed = serializers.SerializerMethodField()  # True False
-    avatar = serializers.SerializerMethodField()  # url
+    is_subscribed = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
@@ -49,7 +49,9 @@ class UserSerializer(DjoserUserSerializer):
         model = User
 
     def get_is_subscribed(self, obj):
-        # if запрос к табл Subscriptions user=user и obj.username=subscribers тогда True
+        current_user = self.context['request'].user.id
+        if obj.subscribers.filter(user=current_user).first():
+            return True
         return False
 
     def get_avatar(self, obj):
