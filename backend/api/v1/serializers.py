@@ -61,15 +61,15 @@ class UserSerializer(DjoserUserSerializer):
 class AvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=False, allow_null=True)
 
-    # def validate(self, data):
-    #     example_value = {
-    #         'field_name': [
-    #             'Введите поле пользователя.'
-    #         ]
-    #     }
-    #     if not data:
-    #         raise serializers.ValidationError(example_value)
-    #     return data
+    def validate(self, data):
+        example_value = {
+            'field_name': [
+                'Введите поле avatar.'
+            ]
+        }
+        if not data:
+            raise serializers.ValidationError(example_value)
+        return data
 
     class Meta:
         fields = ('avatar',)
