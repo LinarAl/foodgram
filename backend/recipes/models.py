@@ -51,14 +51,14 @@ class Ingredient(AbstractTitleModel):
         JAR = settings.JAR_UNIT, _('Банка')
         TO_TASTE = settings.TO_TASTE_UNIT, _('По вкусу')
 
-    unit = models.CharField(
+    measurement_unit = models.CharField(
         max_length=settings.UNIT_FIELD_MAX_LENGTH,
         choices=UnitChoices.choices,
         verbose_name=_('Единица измерения')
     )
 
     def __str__(self):
-        return f'{self.name} {self.unit}'
+        return f'{self.name} {self.measurement_unit}'
 
     class Meta:
         verbose_name = _('Ингридиент')

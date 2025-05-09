@@ -7,9 +7,10 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from .serializers import UserSerializer, AvatarSerializer, TagSerializer
+from .serializers import (UserSerializer, AvatarSerializer,
+                          TagSerializer, IngredientSerializer)
 from .pagination import BaseLimitOffsetPagination
-from recipes.models import Tag
+from recipes.models import Tag, Ingredient
 
 User = get_user_model()
 
@@ -19,6 +20,14 @@ class TagViewSet(viewsets.ModelViewSet):
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    http_method_names = ('get',)
+
+
+class IngredientViewSet(viewsets.ModelViewSet):
+    """ViewSet для модели Tag"""
+
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
     http_method_names = ('get',)
 
 

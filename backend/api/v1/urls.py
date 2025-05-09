@@ -11,6 +11,9 @@ router_v1 = DefaultRouter()
 
 router_v1.register('users', views.UsersViewSet, basename='users')
 router_v1.register('tags', views.TagViewSet, basename='tags')
+router_v1.register('ingredients', views.IngredientViewSet,
+                   basename='ingredients')
+
 
 urlpatterns = [
     # path('auth/', include(auth_urls)),
