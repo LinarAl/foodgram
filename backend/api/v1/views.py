@@ -7,9 +7,19 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from .serializers import UserSerializer, AvatarSerializer
+from .serializers import UserSerializer, AvatarSerializer, TagSerializer
 from .pagination import BaseLimitOffsetPagination
+from recipes.models import Tag
+
 User = get_user_model()
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    """ViewSet для модели Tag"""
+
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    http_method_names = ('get',)
 
 
 class UsersViewSet(UserViewSet):
