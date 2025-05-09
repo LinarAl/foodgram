@@ -166,25 +166,4 @@ class Favorites(AbstractUserRecipesModel):
         verbose_name_plural = _('Избранное')
 
 
-class Subscriptions(models.Model):
-    """Модель подписок."""
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='subscriptions',
-        verbose_name=_('Пользователь')
-    )
-
-    subscribers = models.ManyToManyField(
-        User,
-        verbose_name=_('Подписчик'),
-        related_name='subscribers'
-    )
-
-    class Meta:
-        verbose_name = _('Подписка')
-        verbose_name_plural = _('Подписки')
-
-    def __str__(self):
-        return f'{self.user}'

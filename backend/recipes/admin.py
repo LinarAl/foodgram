@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (Tag, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingList, Favorites, Subscriptions)
+                     ShoppingList, Favorites)
 
 # admin.site.register(AmountIngredients)
 
@@ -44,10 +44,6 @@ class ShoppingListAdmin(admin.ModelAdmin):
     filter_horizontal = ('recipes', )
 
 
-class SubscriptionsAdmin(admin.ModelAdmin):
-    filter_horizontal = ('subscribers', )
-
-
 admin.site.register(Tag)
 
 admin.site.register(Recipe, RecipeAdmin)
@@ -55,4 +51,3 @@ admin.site.register(Ingredient, IngredientAdmin)
 
 admin.site.register(Favorites, FavoritesAdmin)
 admin.site.register(ShoppingList, ShoppingListAdmin)
-admin.site.register(Subscriptions, SubscriptionsAdmin)
