@@ -13,6 +13,7 @@ router_v1.register('users', views.UsersViewSet, basename='users')
 router_v1.register('tags', views.TagViewSet, basename='tags')
 router_v1.register('ingredients', views.IngredientViewSet,
                    basename='ingredients')
+router_v1.register('recipes', views.RecipeViewSet, basename='recipes')
 
 
 urlpatterns = [

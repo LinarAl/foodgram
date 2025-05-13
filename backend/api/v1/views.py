@@ -1,16 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, render
 from djoser.views import UserViewSet
+from recipes.models import Ingredient, Recipe, Tag
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from .serializers import (UserSerializer, AvatarSerializer,
-                          TagSerializer, IngredientSerializer)
 from .pagination import BaseLimitOffsetPagination
-from recipes.models import Tag, Ingredient
+from .serializers import (AvatarSerializer, CreateRecipeSerializer,
+                          IngredientSerializer, RecipeSerializer,
+                          TagSerializer, UserSerializer)
 
 User = get_user_model()
 
@@ -21,6 +22,38 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     http_method_names = ('get',)
+
+
+# class RecipeViewSet(viewsets.ViewSet):
+#     """ViewSet для модели Recipe"""
+
+#     def list(self, request):
+#         queryset = Recipe.objects.all()
+#         serializer = RecipeSerializer(
+#             queryset, many=True, context={'request': request})
+#         return Response(serializer.data)
+
+#     def create(self, request):
+#         queryset = Recipe.objects.all()
+#         print(queryset)
+#         serializer = CreateRecipeSerializer(
+#             queryset, many=False, context={'request': request})
+#         return Response(serializer.data)
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    """ViewSet для модели Recipe"""
+    queryset = Recipe.objects.all()
+    pagination_class = BaseLimitOffsetPagination
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CreateRecipeSerializer
+        if self.request.method == 'PATCH':
+            return CreateRecipeSerializer
+        return RecipeSerializer
 
 
 class IngredientViewSet(viewsets.ModelViewSet):

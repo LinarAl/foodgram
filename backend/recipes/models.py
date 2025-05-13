@@ -71,22 +71,23 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         'Recipe',
         on_delete=models.CASCADE,
-        verbose_name=_('Рецепт')
+        verbose_name=_('Рецепт'),
+        related_name='recipe_ingredient'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        verbose_name=_('Ингридиент')
+        verbose_name=_('Ингридиент'),
+        related_name='ingredient_recipe'
     )
-    amount = models.DecimalField(
-        max_digits=7,
-        decimal_places=2,
+    amount = models.IntegerField(
         verbose_name=_('Количество')
     )
 
     class Meta:
         verbose_name = _('Количество ингридиента')
         verbose_name_plural = _('Количество ингридиентов')
+        default_related_name = 'recipe_ingredients'
 
     def __str__(self):
         return f'{self.ingredient} {self.amount}'
@@ -138,10 +139,10 @@ class AbstractUserRecipesModel(models.Model):
         on_delete=models.CASCADE,
         verbose_name=_('Пользователь')
     )
-    recipes = models.ManyToManyField(
-        Recipe,
-        verbose_name=_('Рецепт')
-    )
+    # recipes = models.ManyToManyField(
+    #     Recipe,
+    #     verbose_name=_('Рецепт')
+    # )
 
     class Meta:
         abstract = True
@@ -153,6 +154,12 @@ class AbstractUserRecipesModel(models.Model):
 class ShoppingList(AbstractUserRecipesModel):
     """Модель списка покупок."""
 
+    recipes = models.ManyToManyField(
+        Recipe,
+        verbose_name=_('Рецепт'),
+        related_name='recipe_shopping_list'
+    )
+
     class Meta:
         verbose_name = _('Список покупок')
         verbose_name_plural = _('Список покупок')
@@ -161,9 +168,12 @@ class ShoppingList(AbstractUserRecipesModel):
 class Favorites(AbstractUserRecipesModel):
     """Модель избранного."""
 
+    recipes = models.ManyToManyField(
+        Recipe,
+        verbose_name=_('Рецепт'),
+        related_name='recipe_favorites'
+    )
+
     class Meta:
         verbose_name = _('Избранное')
         verbose_name_plural = _('Избранное')
-
-
-
