@@ -1,18 +1,16 @@
-"""Сериализаторы"""
-# Проверить значения по умолчанию и вывести в константы settings
-# Добавить пермишены
-# Добавить валидацию
-# Добавть ссылку
+"""Сериализаторы."""
 import base64
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
+
+from .validators import validate_unique_data
 
 User = get_user_model()
 
@@ -52,9 +50,10 @@ class UserSerializer(DjoserUserSerializer):
 
     def get_is_subscribed(self, obj):
         current_user = self.context['request'].user.id
-        if obj.subscribers.filter(user=current_user).first():
-            return True
-        return False
+        return bool(
+            current_user
+            and obj.subscribers.filter(user=current_user).first()
+        )
 
     def get_avatar(self, obj):
         if obj.avatar:
@@ -104,7 +103,9 @@ class ShortRecipeIngredientSerializer(serializers.Serializer):
         queryset=Ingredient.objects.all(),
         source='ingredient'
     )
-    amount = serializers.IntegerField(min_value=1, max_value=1000000)
+    amount = serializers.IntegerField(
+        min_value=settings.INGREDIENT_MIN_AMOUNT,
+        max_value=settings.INGREDIENT_MAX_AMOUNT)
 
     class Meta:
         model = RecipeIngredient
@@ -131,7 +132,7 @@ class FullRecipeIngredientSerializer(serializers.HyperlinkedModelSerializer):
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe. Create action."""
-    image = Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField(required=True, allow_null=False)
     ingredients = ShortRecipeIngredientSerializer(
         source='recipe_ingredients',
         many=True
@@ -141,6 +142,14 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'ingredients', 'tags', 'image',
                   'name', 'text', 'cooking_time')
         model = Recipe
+
+    def validate(self, data):
+        ingredients = data.get('recipe_ingredients')
+        tags = data.get('tags')
+
+        validate_unique_data(ingredients, 'Ингридиенты', 'ingredient')
+        validate_unique_data(tags, 'Теги')
+        return data
 
     @transaction.atomic()
     def create(self, validated_data):
@@ -154,62 +163,69 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                     ingredient=ingredient.get('ingredient'),
                     amount=ingredient.get('amount')
                 ) for ingredient in ingredients
-            ]
+            ],
+            batch_size=settings.BATCH_SIZE
         )
         recipe.tags.set(tags)
         return recipe
 
     @transaction.atomic()
     def update(self, instance, validated_data):
+        """Обновление полей с помощью bulk_update при запросе PATCH.
 
+        exist_ingr - необновленные объекты recipe_ingredient.
+        exist_dict_id_ingr - словарь где ключ - id необновленного ингредиента,
+        значение - необновленный объект recipe_ingredient.
+        new_ingr - множество(set) id новых ингредиентов.
+        to_delete - объекты recipe_ingredient, которые нужно удалить.
+        updates - список ингридиентов для обновления.
+        new_ingredients - список ингридиентов для создания.
+        """
         tags = validated_data.pop('tags', instance.tags)
         instance.tags.set(tags)
-
         ingredients = validated_data.pop('recipe_ingredients', None)
-        if validated_data:
-            instance = super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
-        if ingredients:
-            exist_ingr = instance.recipe_ingredient.all()
-            exist_dict_id_ingr = {
-                r_i_obj.ingredient_id: r_i_obj for r_i_obj in exist_ingr}
-            new_ingr = {
-                ingredient['ingredient'].id for ingredient in ingredients}
+        exist_ingr = instance.recipe_ingredient.all()
+        exist_dict_id_ingr = {
+            r_i_obj.ingredient_id: r_i_obj for r_i_obj in exist_ingr}
+        new_ingr = {
+            ingredient['ingredient'].id for ingredient in ingredients}
 
-            to_delete = exist_ingr.exclude(ingredient_id__in=new_ingr)
-            if to_delete.exists():
-                to_delete.delete()
+        to_delete = exist_ingr.exclude(ingredient_id__in=new_ingr)
+        if to_delete.exists():
+            to_delete.delete()
 
-            updates = []
-            new_ingredients = []
+        updates = []
+        new_ingredients = []
 
-            for ingredient in ingredients:
-                ingredient_id = ingredient['ingredient'].id
-                if ingredient_id in exist_dict_id_ingr:
-                    obj = exist_dict_id_ingr[ingredient_id]
-                    obj.amount = ingredient['amount']
-                    updates.append(obj)
-                else:
-                    new_ingredients.append(
-                        RecipeIngredient(
-                            recipe=instance,
-                            ingredient=ingredient.get('ingredient'),
-                            amount=ingredient.get('amount')
-                        )
+        for ingredient in ingredients:
+            ingredient_id = ingredient['ingredient'].id
+            if ingredient_id in exist_dict_id_ingr:
+                obj = exist_dict_id_ingr[ingredient_id]
+                obj.amount = ingredient['amount']
+                updates.append(obj)
+            else:
+                new_ingredients.append(
+                    RecipeIngredient(
+                        recipe=instance,
+                        ingredient=ingredient.get('ingredient'),
+                        amount=ingredient.get('amount')
                     )
-
-            if updates:
-                RecipeIngredient.objects.bulk_update(
-                    updates,
-                    fields=['amount'],
-                    batch_size=100
                 )
 
-            if new_ingredients:
-                RecipeIngredient.objects.bulk_create(
-                    new_ingredients,
-                    batch_size=100
-                )
+        if updates:
+            RecipeIngredient.objects.bulk_update(
+                updates,
+                fields=['amount'],
+                batch_size=settings.BATCH_SIZE
+            )
+
+        if new_ingredients:
+            RecipeIngredient.objects.bulk_create(
+                new_ingredients,
+                batch_size=settings.BATCH_SIZE
+            )
         return instance
 
     def to_representation(self, instance):
@@ -223,7 +239,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
 
     ingredients = FullRecipeIngredientSerializer(
-        source='recipe_ingredient', many=True, read_only=True)
+        source='recipe_ingredients', many=True, read_only=True)
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
 
@@ -239,15 +255,17 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         current_user = self.context['request'].user.id
-        if obj.recipe_favorites.filter(user=current_user).first():
-            return True
-        return False
+        return bool(
+            current_user
+            and obj.recipe_favorites.filter(user=current_user).first()
+        )
 
     def get_is_in_shopping_cart(self, obj):
         current_user = self.context['request'].user.id
-        if obj.recipe_shopping_list.filter(user=current_user).first():
-            return True
-        return False
+        return bool(
+            current_user
+            and obj.recipe_shopping_list.filter(user=current_user).first()
+        )
 
     def get_image(self, obj):
         if obj.image:

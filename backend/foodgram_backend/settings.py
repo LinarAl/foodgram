@@ -142,6 +142,13 @@ USERNAME_FIELD_LENGTH = 150
 FIRST_NAME_FIELD_LENGTH = 150
 LAST_NAME_FIELD_LENGTH = 150
 
+# RecipeIngredient
+INGREDIENT_MIN_AMOUNT = 1
+INGREDIENT_MAX_AMOUNT = 1000000
+
+# serializers create/update ingredients
+BATCH_SIZE = 100
+
 # recipes settings: UnitChoices
 GRAMS_UNIT = 'г'
 MILLILITERS_UNIT = 'мл'
