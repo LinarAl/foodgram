@@ -97,22 +97,19 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
 
 
-class ShortRecipeIngredientSerializer(serializers.Serializer):
+class ShortRecipeIngredientSerializer(serializers.ModelSerializer):
     """Не полный Сериализатор для модели RecipeIngredient."""
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
         source='ingredient'
     )
-    amount = serializers.IntegerField(
-        min_value=settings.INGREDIENT_MIN_AMOUNT,
-        max_value=settings.INGREDIENT_MAX_AMOUNT)
 
     class Meta:
         model = RecipeIngredient
         fields = ['id', 'amount']
 
 
-class FullRecipeIngredientSerializer(serializers.HyperlinkedModelSerializer):
+class FullRecipeIngredientSerializer(serializers.ModelSerializer):
     """Полный сериализатор для модели RecipeIngredient и поля Ingredient."""
 
     id = serializers.IntegerField(source='ingredient.id')
@@ -239,7 +236,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
 
     ingredients = FullRecipeIngredientSerializer(
-        source='recipe_ingredients', many=True, read_only=True)
+        source='recipe_ingredient', many=True, read_only=True)
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
 

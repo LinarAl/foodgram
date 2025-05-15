@@ -1,8 +1,7 @@
 from django.contrib import admin
-from .models import (Tag, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingList, Favorites)
 
-# admin.site.register(AmountIngredients)
+from .models import (Favorites, Ingredient, Recipe, RecipeIngredient,
+                     ShoppingList, Tag)
 
 
 class IngredientInLine(admin.TabularInline):
@@ -10,44 +9,110 @@ class IngredientInLine(admin.TabularInline):
     min_num = 1
 
 
-# class TagInLine(admin.TabularInline):
-#     model = Recipe.tag.through
+@admin.register(Tag)
+class Tagadmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'name',
+        'slug',
+        'created_at'
+    )
+    readonly_fields = ('created_at',)
+    search_fields = (
+        'name',
+        'slug',
+    )
+    list_display_links = (
+        'id',
+        'name',
+        'slug',
+    )
+    prepopulated_fields = {'slug': ('name',)}
 
-# @admin.register(Recipe)
+
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'name',
+        'measurement_unit',
+        'created_at'
+    )
+    readonly_fields = ('created_at',)
+    search_fields = (
+        'name',
+    )
+    list_display_links = (
+        'id',
+        'name',
+        'measurement_unit',
+    )
+    list_filter = ('name', 'measurement_unit')
+
+
+@admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     filter_horizontal = ('ingredients', 'tags')
     list_display = (
+        'id',
         'name',
         'text',
         'author',
-        'cooking_time'
+        'cooking_time',
+        'favorites_count',
+        'created_at'
     )
+    readonly_fields = ('link', 'favorites_count', 'created_at', 'updated_at')
     inlines = (
         IngredientInLine,
     )
-    # list_editable = (
-    #     'cooking_time',
-    # )
+    list_display_links = (
+        'id',
+        'name',
+        'text'
+    )
     search_fields = ('author__username', 'name')
     list_filter = ('tags',)
 
+    def favorites_count(self, obj):
+        return obj.favorites.count()
 
-class IngredientAdmin(admin.ModelAdmin):
-    search_fields = ('name', 'unit')
+    favorites_count.short_description = 'В избранном (кол-во)'
 
 
+@admin.register(Favorites)
 class FavoritesAdmin(admin.ModelAdmin):
-    filter_horizontal = ('recipes', )
+    list_display = (
+        'id',
+        'user',
+        'recipe',
+        'created_at'
+    )
+    list_display_links = (
+        'id',
+        'user',
+        'recipe'
+    )
+    readonly_fields = ('created_at',)
+    search_fields = ('user__username', 'recipe__name')
+    list_filter = ('user',)
+    list_per_page = 30
 
 
+@admin.register(ShoppingList)
 class ShoppingListAdmin(admin.ModelAdmin):
-    filter_horizontal = ('recipes', )
-
-
-admin.site.register(Tag)
-
-admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(Ingredient, IngredientAdmin)
-
-admin.site.register(Favorites, FavoritesAdmin)
-admin.site.register(ShoppingList, ShoppingListAdmin)
+    list_display = (
+        'id',
+        'user',
+        'recipe',
+        'created_at'
+    )
+    list_display_links = (
+        'id',
+        'user',
+        'recipe'
+    )
+    readonly_fields = ('created_at',)
+    search_fields = ('user__username', 'recipe__name')
+    list_filter = ('user',)
+    list_per_page = 30

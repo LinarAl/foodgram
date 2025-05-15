@@ -126,30 +126,37 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
-# Pagination
-DEFAULT_PAGE_SIZE = 10
 
+# Field limitations
 # Forbidden values
 FORBIDDEN_USERNAMES = ('admin',)
-
-# Field length limitations
-SLUG_FIELD_MAX_LENGTH = 32
-TITLE_FIELD_MAX_LENGTH = 50
-UNIT_FIELD_MAX_LENGTH = 8
-RECIPE_NAME_FIELD_MAX_LENGTH = 256
-
+# Models:
+# Users
 USERNAME_FIELD_LENGTH = 150
 FIRST_NAME_FIELD_LENGTH = 150
 LAST_NAME_FIELD_LENGTH = 150
-
+# Name
+TITLE_FIELD_MAX_LENGTH = 50
+# Tag
+SLUG_FIELD_MAX_LENGTH = 32
+# Ingredient
+MEASUREMENT_UNIT_FIELD_MAX_LENGTH = 8
 # RecipeIngredient
-INGREDIENT_MIN_AMOUNT = 1
-INGREDIENT_MAX_AMOUNT = 1000000
+AMOUNT_INGREDIENT_FIELD_MIN = 1
+AMOUNT_INGREDIENT_FIELD_MAX = 1000000
+# Recipe
+RECIPE_NAME_FIELD_MAX_LENGTH = 256
+COOKING_TIME_FIELD_MIN = 1
+COOKING_TIME_FIELD_MAX = 10080
+LINK_FIELD_MAX_LENGTH = 8
 
-# serializers create/update ingredients
+# Serializers:
+# Pagination
+DEFAULT_PAGE_SIZE = 10
+# create/update ingredients batch
 BATCH_SIZE = 100
 
-# recipes settings: UnitChoices
+# Recipes settings: Ingredient UnitChoices
 GRAMS_UNIT = 'г'
 MILLILITERS_UNIT = 'мл'
 QUANTITY_UNIT = 'шт.'

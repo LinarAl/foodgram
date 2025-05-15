@@ -3,15 +3,18 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.utils.crypto import get_random_string
 
 User = get_user_model()
 
 
-class AbstractTitleModel(models.Model):
-    """Абстрактная модель с полем title."""
+class AbstractNameModel(models.Model):
+    """Абстрактная модель с полем name."""
 
     name = models.CharField(
         max_length=settings.TITLE_FIELD_MAX_LENGTH,
+        unique=True,
         verbose_name=_('Название')
     )
 
@@ -22,21 +25,27 @@ class AbstractTitleModel(models.Model):
         return self.name
 
 
-class Tag(AbstractTitleModel):
+class Tag(AbstractNameModel):
     """Модель тега."""
 
     slug = models.SlugField(
         max_length=settings.SLUG_FIELD_MAX_LENGTH,
         unique=True,
+        db_index=True,
         verbose_name=_('slug')
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Дата создания')
     )
 
     class Meta:
         verbose_name = _('Тег')
         verbose_name_plural = _('Теги')
+        ordering = ('name',)
 
 
-class Ingredient(AbstractTitleModel):
+class Ingredient(AbstractNameModel):
     """Модель ингридиента."""
 
     class UnitChoices(models.TextChoices):
@@ -52,9 +61,13 @@ class Ingredient(AbstractTitleModel):
         TO_TASTE = settings.TO_TASTE_UNIT, _('По вкусу')
 
     measurement_unit = models.CharField(
-        max_length=settings.UNIT_FIELD_MAX_LENGTH,
+        max_length=settings.MEASUREMENT_UNIT_FIELD_MAX_LENGTH,
         choices=UnitChoices.choices,
         verbose_name=_('Единица измерения')
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Дата создания')
     )
 
     def __str__(self):
@@ -78,13 +91,34 @@ class RecipeIngredient(models.Model):
         Ingredient,
         on_delete=models.CASCADE,
         verbose_name=_('Ингридиент'),
-        related_name='ingredient_recipe'
+
     )
     amount = models.IntegerField(
-        verbose_name=_('Количество')
+        verbose_name=_('Количество'),
+        validators=[
+            MinValueValidator(
+                settings.AMOUNT_INGREDIENT_FIELD_MIN,
+                message=_(
+                    f'Значение должно быть меньше \n'
+                    f'{settings.AMOUNT_INGREDIENT_FIELD_MIN}')
+            ),
+            MaxValueValidator(
+                settings.AMOUNT_INGREDIENT_FIELD_MAX,
+                message=_(
+                    f'Значение должно быть больше \n'
+                    f'{settings.AMOUNT_INGREDIENT_FIELD_MAX}')
+            )
+        ]
     )
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_recipe'
+            )
+        ]
+        ordering = ('recipe', 'ingredient')
         verbose_name = _('Количество ингридиента')
         verbose_name_plural = _('Количество ингридиентов')
         default_related_name = 'recipe_ingredients'
@@ -93,11 +127,12 @@ class RecipeIngredient(models.Model):
         return f'{self.ingredient} {self.amount}'
 
 
-class Recipe(AbstractTitleModel):
+class Recipe(AbstractNameModel):
     """Модель рецепта."""
 
     name = models.CharField(
         max_length=settings.RECIPE_NAME_FIELD_MAX_LENGTH,
+        db_index=True,
         verbose_name=_('Название')
     )
     author = models.ForeignKey(
@@ -107,9 +142,6 @@ class Recipe(AbstractTitleModel):
     )
     image = models.ImageField(
         upload_to='recipe/images/',
-        null=True,
-        blank=True,  # !!!!!!!!!!
-        default=None,
         verbose_name=_('Картинка')
     )
     text = models.TextField(verbose_name=_('Описание'))
@@ -123,12 +155,47 @@ class Recipe(AbstractTitleModel):
         verbose_name=_('Тег')
     )
     cooking_time = models.IntegerField(
-        verbose_name=_('Время приготовления в минутах')
+        verbose_name=_('Время приготовления в минутах'),
+        validators=[
+            MinValueValidator(
+                settings.COOKING_TIME_FIELD_MIN,
+                message=_(
+                    f'Значение должно быть меньше \n'
+                    f'{settings.COOKING_TIME_FIELD_MIN}')
+            ),
+            MaxValueValidator(
+                settings.COOKING_TIME_FIELD_MAX,
+                message=_(
+                    f'Значение должно быть больше \n'
+                    f'{settings.COOKING_TIME_FIELD_MAX}')
+            )
+        ]
+    )
+    link = models.CharField(
+        max_length=settings.LINK_FIELD_MAX_LENGTH,
+        unique=True,
+        blank=True,
+        verbose_name=_('Короткая ссылка')
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Дата создания')
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_('Дата обновления')
     )
 
     class Meta:
         verbose_name = _('Рецепт')
         verbose_name_plural = _('Рецепты')
+        ordering = ('-created_at',)
+
+    def save(self, *args, **kwargs):
+        if not self.link:
+            self.link = get_random_string(
+                length=settings.LINK_FIELD_MAX_LENGTH)
+        super().save(*args, **kwargs)
 
 
 class AbstractUserRecipesModel(models.Model):
@@ -139,10 +206,15 @@ class AbstractUserRecipesModel(models.Model):
         on_delete=models.CASCADE,
         verbose_name=_('Пользователь')
     )
-    # recipes = models.ManyToManyField(
-    #     Recipe,
-    #     verbose_name=_('Рецепт')
-    # )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name=_('Рецепт')
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Дата создания')
+    )
 
     class Meta:
         abstract = True
@@ -154,26 +226,30 @@ class AbstractUserRecipesModel(models.Model):
 class ShoppingList(AbstractUserRecipesModel):
     """Модель списка покупок."""
 
-    recipes = models.ManyToManyField(
-        Recipe,
-        verbose_name=_('Рецепт'),
-        related_name='recipe_shopping_list'
-    )
-
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_shopping_list'
+            )
+        ]
         verbose_name = _('Список покупок')
         verbose_name_plural = _('Список покупок')
+        default_related_name = 'shopping_list'
+        ordering = ('-created_at',)
 
 
 class Favorites(AbstractUserRecipesModel):
     """Модель избранного."""
 
-    recipes = models.ManyToManyField(
-        Recipe,
-        verbose_name=_('Рецепт'),
-        related_name='recipe_favorites'
-    )
-
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_favorites'
+            )
+        ]
         verbose_name = _('Избранное')
         verbose_name_plural = _('Избранное')
+        default_related_name = 'favorites'
+        ordering = ('-created_at',)
