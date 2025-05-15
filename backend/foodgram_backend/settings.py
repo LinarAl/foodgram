@@ -129,7 +129,7 @@ REST_FRAMEWORK = {
 
 # Field limitations
 # Forbidden values
-FORBIDDEN_USERNAMES = ('admin',)
+FORBIDDEN_USERNAMES = ('',)
 # Models:
 # Users
 USERNAME_FIELD_LENGTH = 150

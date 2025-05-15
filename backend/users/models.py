@@ -20,22 +20,16 @@ class User(AbstractUser):
     )
     email = models.EmailField(
         unique=True,
-        # error_messages={
-        #     'unique': 'Данный адрес уже используется'
-        # },
         verbose_name=_('Адрес электронной почты')
     )
-
     first_name = models.CharField(
         max_length=settings.FIRST_NAME_FIELD_LENGTH,
         verbose_name=_('Имя пользователя')
     )
-
     last_name = models.CharField(
         max_length=settings.LAST_NAME_FIELD_LENGTH,
         verbose_name=_('Фамилия пользователя')
     )
-
     avatar = models.ImageField(
         upload_to='users/images/',
         null=True,
@@ -64,16 +58,31 @@ class Subscriptions(models.Model):
         related_name='subscriptions',
         verbose_name=_('Пользователь')
     )
-
-    subscribers = models.ManyToManyField(
+    subscriber = models.ForeignKey(
         User,
+        on_delete=models.CASCADE,
         verbose_name=_('Подписчик'),
-        related_name='subscribers'
+        related_name='subscriber'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Дата создания')
     )
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'subscriber'],
+                name='unique_subscription'
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('subscriber')),
+                name='unique_user'
+            )
+        ]
         verbose_name = _('Подписка')
         verbose_name_plural = _('Подписки')
+        ordering = ('-created_at',)
 
     def __str__(self):
         return f'{self.user}'
