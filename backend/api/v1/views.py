@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from djoser.views import UserViewSet
 from recipes.models import Ingredient, Recipe, Tag
 from rest_framework import filters, status, viewsets
@@ -7,11 +7,12 @@ from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .pagination import BaseLimitOffsetPagination
 from .serializers import (AvatarSerializer, CreateRecipeSerializer,
                           IngredientSerializer, RecipeSerializer,
-                          TagSerializer, UserSerializer)
+                          TagSerializer)
 
 User = get_user_model()
 
@@ -23,22 +24,6 @@ class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
     http_method_names = ('get',)
 
-
-# class RecipeViewSet(viewsets.ViewSet):
-#     """ViewSet для модели Recipe"""
-
-#     def list(self, request):
-#         queryset = Recipe.objects.all()
-#         serializer = RecipeSerializer(
-#             queryset, many=True, context={'request': request})
-#         return Response(serializer.data)
-
-#     def create(self, request):
-#         queryset = Recipe.objects.all()
-#         print(queryset)
-#         serializer = CreateRecipeSerializer(
-#             queryset, many=False, context={'request': request})
-#         return Response(serializer.data)
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для модели Recipe"""
@@ -54,6 +39,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.method == 'PATCH':
             return CreateRecipeSerializer
         return RecipeSerializer
+
+    @action(detail=True, methods=['get'], url_path='get-link')
+    def get_short_link(self, request, *args, **kwargs):
+        current_url = request.build_absolute_uri().split('/api')[0]
+        link = self.get_object().link
+        return Response(
+            data={'get-link': f'{current_url}/{link}'},
+            status=status.HTTP_200_OK
+        )
+
+
+def recipe_redirect_view(request, short_link):
+    """Редирект на рецепт короткой ссылке."""
+    print(short_link)
+    recipe = get_object_or_404(Recipe, link=short_link)
+    print(recipe.id)
+    return redirect(f'/api/recipes/{recipe.id}')
 
 
 class IngredientViewSet(viewsets.ModelViewSet):

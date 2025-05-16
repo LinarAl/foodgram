@@ -1,10 +1,10 @@
 """Модели приложения recipes."""
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.utils.crypto import get_random_string
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -195,6 +195,9 @@ class Recipe(AbstractNameModel):
         if not self.link:
             self.link = get_random_string(
                 length=settings.LINK_FIELD_MAX_LENGTH)
+            while Recipe.objects.filter(link=self.link).exists():
+                self.link = get_random_string(
+                    length=settings.LINK_FIELD_MAX_LENGTH)
         super().save(*args, **kwargs)
 
 

@@ -52,7 +52,7 @@ class UserSerializer(DjoserUserSerializer):
         current_user = self.context['request'].user.id
         return bool(
             current_user
-            and obj.subscribers.filter(user=current_user).first()
+            and obj.subscriber.filter(user=current_user).first()
         )
 
     def get_avatar(self, obj):
@@ -254,14 +254,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         current_user = self.context['request'].user.id
         return bool(
             current_user
-            and obj.recipe_favorites.filter(user=current_user).first()
+            and obj.favorites.filter(user=current_user).first()
         )
 
     def get_is_in_shopping_cart(self, obj):
         current_user = self.context['request'].user.id
         return bool(
             current_user
-            and obj.recipe_shopping_list.filter(user=current_user).first()
+            and obj.shopping_list.filter(user=current_user).first()
         )
 
     def get_image(self, obj):
