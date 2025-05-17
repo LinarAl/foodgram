@@ -7,7 +7,8 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as DjoserUserSerializer
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import (Ingredient, Recipe, RecipeIngredient, ShoppingList,
+                            Tag)
 from rest_framework import serializers
 
 from .validators import validate_unique_data
@@ -268,3 +269,28 @@ class RecipeSerializer(serializers.ModelSerializer):
         if obj.image:
             return obj.image.url
         return None
+
+
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор модели Recipe для ShoppingListSerializer."""
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = ('id', 'name', 'image', 'cooking_time')
+        model = Recipe
+
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
+
+
+class ShoppingListSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели ShoppingList."""
+
+    class Meta:
+        fields = ('user', 'recipe')
+        model = ShoppingList
+
+    def to_representation(self, instance):
+        return ShortRecipeSerializer(instance.recipe).data
