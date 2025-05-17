@@ -22,12 +22,11 @@ from .filters import IngredientFilter, RecipeFilter
 User = get_user_model()
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet для модели Tag"""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    http_method_names = ('get',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -131,12 +130,11 @@ def recipe_redirect_view(request, short_link):
     return redirect(f'/api/recipes/{recipe.id}')
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet для модели Tag"""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    http_method_names = ('get',)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
 
