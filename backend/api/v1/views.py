@@ -2,9 +2,10 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Ingredient, Recipe, RecipeIngredient, ShoppingList,
-                            Tag)
+from recipes.models import (Favorites, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingList, Tag)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
@@ -14,9 +15,10 @@ from rest_framework.response import Response
 from .pagination import BaseLimitOffsetPagination
 from .permissions import IsAuthenticatedOrIsAuthorOrReadOnly
 from .serializers import (AvatarSerializer, CreateRecipeSerializer,
-                          IngredientSerializer, RecipeSerializer,
-                          ShoppingListSerializer, TagSerializer)
-
+                          FavoritesSerializer, IngredientSerializer,
+                          RecipeSerializer, ShoppingListSerializer,
+                          TagSerializer)
+from .filters import IngredientFilter, RecipeFilter
 User = get_user_model()
 
 
@@ -30,9 +32,15 @@ class TagViewSet(viewsets.ModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для модели Recipe"""
-    queryset = Recipe.objects.all()
-    pagination_class = BaseLimitOffsetPagination
+    queryset = (
+        Recipe.objects
+        .select_related('author')
+        .prefetch_related('ingredients', 'tags')
+    )
     permission_classes = (IsAuthenticatedOrIsAuthorOrReadOnly,)
+    pagination_class = BaseLimitOffsetPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -97,6 +105,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                            'filename="shopping_cart.txt"')
         return response
 
+    @action(detail=True, methods=['post', 'delete'], url_path='favorite',
+            permission_classes=[IsAuthenticated])
+    def favorites(self, request, *args, **kwargs):
+        if self.request.method == 'POST':
+            serializer = FavoritesSerializer(
+                data={'recipe': self.get_object().id, 'user': request.user.id}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif self.request.method == 'DELETE':
+            deleted, _ = Favorites.objects.filter(
+                user=request.user,
+                recipe=self.get_object()
+            ).delete()
+            if not deleted:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 def recipe_redirect_view(request, short_link):
     """Редирект на рецепт по короткой ссылке."""
@@ -110,6 +137,8 @@ class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     http_method_names = ('get',)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class UsersViewSet(UserViewSet):

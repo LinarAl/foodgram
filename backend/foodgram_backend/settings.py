@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters',
     'rest_framework.authtoken',
     'djoser',
     'recipes.apps.RecipesConfig',
@@ -125,11 +126,14 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    )
 }
 
 # Field limitations
 # Forbidden values
-FORBIDDEN_USERNAMES = ('',)
+FORBIDDEN_USERNAMES = ('me',)
 # Models:
 # Users
 USERNAME_FIELD_LENGTH = 150
@@ -149,7 +153,6 @@ RECIPE_NAME_FIELD_MAX_LENGTH = 256
 COOKING_TIME_FIELD_MIN = 1
 COOKING_TIME_FIELD_MAX = 10080
 LINK_FIELD_MAX_LENGTH = 8
-
 # Serializers:
 # Pagination
 DEFAULT_PAGE_SIZE = 10
