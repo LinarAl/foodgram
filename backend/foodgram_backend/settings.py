@@ -161,6 +161,7 @@ BATCH_SIZE = 100
 # SubscriptionSerializer base recipes_limit
 BASE_RECIPES_LIMIT_SUBSCRIPTION = 5
 
+
 # Recipes settings: Ingredient UnitChoices
 GRAMS_UNIT = 'г'
 MILLILITERS_UNIT = 'мл'
@@ -193,6 +194,9 @@ STATIC_ROOT = BASE_DIR / 'static'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# fixture path
+FIXTURE_PATH = BASE_DIR.parent / 'data'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
