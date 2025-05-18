@@ -1,13 +1,12 @@
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.db.models import Sum
 from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from recipes.models import (Favorites, Ingredient, Recipe, RecipeIngredient,
                             ShoppingList, Tag)
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
