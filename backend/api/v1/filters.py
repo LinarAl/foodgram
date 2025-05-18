@@ -17,17 +17,25 @@ class RecipeFilter(rest_framework.FilterSet):
     )
     ingredients = rest_framework.CharFilter(
         method='filter_ingredients_icontains')
-    # is_favorited = 
-    # is_in_shopping_cart
+    is_favorited = rest_framework.BooleanFilter(
+        method='filter_user_is_in_favorite')
+    is_in_shopping_cart = rest_framework.BooleanFilter(
+        method='filter_user_is_in_shopping_cart')
 
     def filter_ingredients_icontains(self, queryset, name, value):
         return queryset.filter(ingredients__name__icontains=value)
 
+    def filter_user_is_in_favorite(self, queryset, name, value):
+        return queryset.filter(favorites__user=self.request.user.id)
+
+    def filter_user_is_in_shopping_cart(self, queryset, name, value):
+        return queryset.filter(shopping_list__user=self.request.user.id)
+
     class Meta:
         model = Recipe
         fields = (
-            'author', 'tags', 'ingredients'
-        )
+            'is_favorited', 'is_in_shopping_cart', 'author', 'tags',
+            'ingredients')
 
 
 class IngredientFilter(rest_framework.FilterSet):

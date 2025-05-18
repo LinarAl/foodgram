@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+from users.models import Subscription
 
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import BaseLimitOffsetPagination
@@ -21,7 +22,7 @@ from .serializers import (AvatarSerializer, FavoritesSerializer,
                           RecipeSerializer, ShoppingListSerializer,
                           SubscriptionCreateSerializer, SubscriptionSerializer,
                           TagSerializer)
-from users.models import Subscription
+
 User = get_user_model()
 
 
@@ -127,7 +128,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if deleted:
                 return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
-            
 
 
 def recipe_redirect_view(request, short_link):
@@ -170,14 +170,15 @@ class UsersViewSet(UserViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'], url_path='subscribtions',
+    @action(detail=False, methods=['get'], url_path='subscriptions',
             permission_classes=[IsAuthenticated])
     def subscribtions(self, request, *args, **kwargs):
         """Action для отображения подписок пользователя."""
-        sub_users = User.objects.filter(
-            subscriptions__subscriber=request.user
+        user = User.objects.filter(
+            subscriber__user=request.user
         ).prefetch_related('recipes')
-        page = self.paginate_queryset(sub_users)
+        print(user)
+        page = self.paginate_queryset(user)
         serializer = SubscriptionSerializer(
             page, many=True, context={'request': request})
         return self.get_paginated_response(serializer.data)
@@ -186,11 +187,11 @@ class UsersViewSet(UserViewSet):
             permission_classes=[IsAuthenticated])
     def subscribe(self, request, *args, **kwargs):
         """Action для подписки и отписки на пользователя."""
-        sub_user = self.get_object()
-        print(sub_user)
+        user = self.get_object()
+        print(user)
         if self.request.method == 'POST':
             serializer = SubscriptionCreateSerializer(
-                data={'user': request.user.id, 'subscriber': sub_user.id},
+                data={'user': user.id, 'subscriber': request.user.id},
                 context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
@@ -198,10 +199,9 @@ class UsersViewSet(UserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif self.request.method == 'DELETE':
             deleted, _ = Subscription.objects.filter(
-                user=request.user,
-                subscriber=sub_user
+                user=user,
+                subscriber=request.user
             ).delete()
             if deleted:
                 return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
-        

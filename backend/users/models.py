@@ -52,18 +52,19 @@ class User(AbstractUser):
 class Subscription(models.Model):
     """Модель подписок."""
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='subscriptions',
-        verbose_name=_('Пользователь')
-    )
     subscriber = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name=_('Подписчик'),
         related_name='subscriber'
     )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name=_('Пользователь')
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_('Дата создания')
@@ -72,12 +73,12 @@ class Subscription(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'subscriber'],
+                fields=['subscriber', 'user'],
                 name='unique_subscription'
             ),
             models.CheckConstraint(
-                check=~models.Q(user=models.F('subscriber')),
-                name='unique_user'
+                check=~models.Q(subscriber=models.F('user')),
+                name='unique_subscriber'
             )
         ]
         verbose_name = _('Подписка')

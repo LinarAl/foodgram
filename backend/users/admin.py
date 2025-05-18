@@ -9,8 +9,8 @@ User = get_user_model()
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'user',
         'subscriber',
+        'user',
         'created_at'
     )
     readonly_fields = ('created_at',)

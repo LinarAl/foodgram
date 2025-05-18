@@ -55,7 +55,7 @@ class UserSerializer(DjoserUserSerializer):
         return bool(
             current_user.id
             and Subscription.objects.filter(
-                user=obj, subscriber=current_user).exists()
+                subscriber=obj, user=current_user).exists()
         )
 
     def get_avatar(self, obj):
@@ -347,9 +347,15 @@ class SubscriptionCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Subscription."""
 
     class Meta:
-        fields = ('user', 'subscriber')
+        fields = ('subscriber', 'user')
         model = Subscription
+
+    def validate(self, data):
+        if data.get('subscriber') == data.get('user'):
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя.')
+        return data
 
     def to_representation(self, instance):
         return SubscriptionSerializer(
-            instance.subscriber, context=self.context).data
+            instance.user, context=self.context).data
