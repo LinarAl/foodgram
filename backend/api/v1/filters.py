@@ -17,6 +17,8 @@ class RecipeFilter(rest_framework.FilterSet):
     )
     ingredients = rest_framework.CharFilter(
         method='filter_ingredients_icontains')
+    # is_favorited = 
+    # is_in_shopping_cart
 
     def filter_ingredients_icontains(self, queryset, name, value):
         return queryset.filter(ingredients__name__icontains=value)

@@ -158,6 +158,8 @@ LINK_FIELD_MAX_LENGTH = 8
 DEFAULT_PAGE_SIZE = 10
 # create/update ingredients batch
 BATCH_SIZE = 100
+# SubscriptionSerializer base recipes_limit
+BASE_RECIPES_LIMIT_SUBSCRIPTION = 5
 
 # Recipes settings: Ingredient UnitChoices
 GRAMS_UNIT = 'г'

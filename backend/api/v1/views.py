@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.db.models import Sum
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -6,19 +7,21 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from recipes.models import (Favorites, Ingredient, Recipe, RecipeIngredient,
                             ShoppingList, Tag)
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from .pagination import BaseLimitOffsetPagination
-from .permissions import IsAuthenticatedOrIsAuthorOrReadOnly
-from .serializers import (AvatarSerializer, CreateRecipeSerializer,
-                          FavoritesSerializer, IngredientSerializer,
-                          RecipeSerializer, ShoppingListSerializer,
-                          TagSerializer)
 from .filters import IngredientFilter, RecipeFilter
+from .pagination import BaseLimitOffsetPagination
+from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
+from .serializers import (AvatarSerializer, FavoritesSerializer,
+                          IngredientSerializer, RecipeCreateSerializer,
+                          RecipeSerializer, ShoppingListSerializer,
+                          SubscriptionCreateSerializer, SubscriptionSerializer,
+                          TagSerializer)
+from users.models import Subscription
 User = get_user_model()
 
 
@@ -36,17 +39,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         .select_related('author')
         .prefetch_related('ingredients', 'tags')
     )
-    permission_classes = (IsAuthenticatedOrIsAuthorOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
     pagination_class = BaseLimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    http_method_names = ('get', 'post', 'patch', 'delete')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def get_serializer_class(self):
         if self.request.method == 'POST' or self.request.method == 'PATCH':
-            return CreateRecipeSerializer
+            return RecipeCreateSerializer
         return RecipeSerializer
 
     @action(detail=True, methods=['get'], url_path='get-link')
@@ -75,9 +79,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 recipe=self.get_object()
             ).delete()
-            if not deleted:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            if deleted:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart',
             permission_classes=[IsAuthenticated])
@@ -107,6 +111,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='favorite',
             permission_classes=[IsAuthenticated])
     def favorites(self, request, *args, **kwargs):
+        """Action для добавления и удаления рецепта в избранное."""
         if self.request.method == 'POST':
             serializer = FavoritesSerializer(
                 data={'recipe': self.get_object().id, 'user': request.user.id}
@@ -119,9 +124,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 recipe=self.get_object()
             ).delete()
-            if not deleted:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            if deleted:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+            
 
 
 def recipe_redirect_view(request, short_link):
@@ -143,23 +149,59 @@ class UsersViewSet(UserViewSet):
     """ViewSet для модели Users."""
 
     queryset = User.objects.all()
-    # serializer_class = UserSerializer
-    # lookup_field = 'username'
     pagination_class = BaseLimitOffsetPagination
-    # permission_classes = (IsAdminOnly,)
-    # filter_backends = (filters.SearchFilter,)
-    # search_fields = ('username',)
     http_method_names = ('get', 'post', 'put', 'delete')
+    permission_classes = (IsAdminOrReadOnly, IsAuthorOrReadOnly)
 
     @action(detail=False, methods=['put', 'delete'],
             permission_classes=[IsAuthenticated], url_path='me/avatar')
     def avatar(self, request):
+        """Action для добавления и удаления аватара пользователя."""
         user = get_object_or_404(User, username=request.user.username)
 
-        serializer = AvatarSerializer(user, data=request.data)
-        serializer.is_valid(raise_exception=True)
         if request.method == 'PUT':
+            serializer = AvatarSerializer(user, data=request.data)
+            serializer.is_valid(raise_exception=True)
             serializer.save()
-        else:
-            serializer.save(avatar=None)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif request.method == 'DELETE' and user.avatar:
+            user.avatar.delete()
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], url_path='subscribtions',
+            permission_classes=[IsAuthenticated])
+    def subscribtions(self, request, *args, **kwargs):
+        """Action для отображения подписок пользователя."""
+        sub_users = User.objects.filter(
+            subscriptions__subscriber=request.user
+        ).prefetch_related('recipes')
+        page = self.paginate_queryset(sub_users)
+        serializer = SubscriptionSerializer(
+            page, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='subscribe',
+            permission_classes=[IsAuthenticated])
+    def subscribe(self, request, *args, **kwargs):
+        """Action для подписки и отписки на пользователя."""
+        sub_user = self.get_object()
+        print(sub_user)
+        if self.request.method == 'POST':
+            serializer = SubscriptionCreateSerializer(
+                data={'user': request.user.id, 'subscriber': sub_user.id},
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif self.request.method == 'DELETE':
+            deleted, _ = Subscription.objects.filter(
+                user=request.user,
+                subscriber=sub_user
+            ).delete()
+            if deleted:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+        

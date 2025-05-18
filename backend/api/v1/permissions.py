@@ -2,12 +2,16 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
-class IsAuthenticatedOrIsAuthorOrReadOnly(BasePermission):
-    """Чтение для всех, Post метод для авторизованных пользователей, Patch и
-    Delete методы только для авторов объектов."""
+class IsAdminOrReadOnly(BasePermission):
+    """К запросам PUT, PATCH, DELETE допускается только автор и админ."""
 
-    def has_permission(self, request, view):
-        return request.method in SAFE_METHODS or request.user.is_authenticated
+    def has_object_permission(self, request, view, obj):
+        return (request.method in SAFE_METHODS
+                or (request.user.is_authenticated and request.user.is_staff))
+
+
+class IsAuthorOrReadOnly(BasePermission):
+    """К запросам PUT, PATCH, DELETE допускается только автор."""
 
     def has_object_permission(self, request, view, obj):
         return request.method in SAFE_METHODS or obj.author == request.user

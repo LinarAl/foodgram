@@ -138,7 +138,8 @@ class Recipe(AbstractNameModel):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name=_('Автор')
+        verbose_name=_('Автор'),
+        related_name='recipes'
     )
     image = models.ImageField(
         upload_to='recipe/images/',

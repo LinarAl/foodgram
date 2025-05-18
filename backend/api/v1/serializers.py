@@ -7,9 +7,10 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer
 from djoser.serializers import UserSerializer as DjoserUserSerializer
-from recipes.models import (Ingredient, Recipe, RecipeIngredient, ShoppingList,
-                            Tag, Favorites)
+from recipes.models import (Favorites, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingList, Tag)
 from rest_framework import serializers
+from users.models import Subscription
 
 from .validators import validate_unique_data
 
@@ -50,10 +51,11 @@ class UserSerializer(DjoserUserSerializer):
         model = User
 
     def get_is_subscribed(self, obj):
-        current_user = self.context['request'].user.id
+        current_user = self.context['request'].user
         return bool(
-            current_user
-            and obj.subscriber.filter(user=current_user).first()
+            current_user.id
+            and Subscription.objects.filter(
+                user=obj, subscriber=current_user).exists()
         )
 
     def get_avatar(self, obj):
@@ -128,7 +130,7 @@ class FullRecipeIngredientSerializer(serializers.ModelSerializer):
         return obj.ingredient.measurement_unit
 
 
-class CreateRecipeSerializer(serializers.ModelSerializer):
+class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe. Create action."""
     image = Base64ImageField(required=True, allow_null=False)
     ingredients = ShortRecipeIngredientSerializer(
@@ -255,14 +257,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         current_user = self.context['request'].user.id
         return bool(
             current_user
-            and obj.favorites.filter(user=current_user).first()
+            and obj.favorites.filter(user=current_user).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
         current_user = self.context['request'].user.id
         return bool(
             current_user
-            and obj.shopping_list.filter(user=current_user).first()
+            and obj.shopping_list.filter(user=current_user).exists()
         )
 
     def get_image(self, obj):
@@ -299,7 +301,7 @@ class ShoppingListSerializer(serializers.ModelSerializer):
 
 
 class FavoritesSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели ShoppingList."""
+    """Сериализатор для модели Favorites."""
 
     class Meta:
         fields = ('user', 'recipe')
@@ -307,3 +309,47 @@ class FavoritesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return ShortRecipeSerializer(instance.recipe).data
+
+
+class SubscriptionSerializer(UserSerializer):
+    """Сериализатор для отображения подписок."""
+
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count', 'avatar')
+        model = User
+
+    def get_recipes_limit(self):
+        """Устанавливаем лимит для рецептов."""
+        request = self.context.get('request')
+        limit = settings.BASE_RECIPES_LIMIT_SUBSCRIPTION
+        if not request:
+            return limit
+        try:
+            return int(request.query_params.get('recipes_limit', limit))
+        except (ValueError, TypeError):
+            return limit
+
+    def get_recipes(self, obj):
+        recipes_limit = self.get_recipes_limit()
+        recipes = obj.recipes.all()[:recipes_limit]
+
+        return ShortRecipeSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+
+class SubscriptionCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Subscription."""
+
+    class Meta:
+        fields = ('user', 'subscriber')
+        model = Subscription
+
+    def to_representation(self, instance):
+        return SubscriptionSerializer(
+            instance.subscriber, context=self.context).data
