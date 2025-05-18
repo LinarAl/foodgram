@@ -23,7 +23,8 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f'Успешно загружено. Записей в файле: {len(ingredients)}'
+                        f'Успешно загружено. \n'
+                        f'Записей в файле: {len(ingredients)}'
                     )
                 )
                 self.stdout.write(self.style.SUCCESS('Команда завершена'))
