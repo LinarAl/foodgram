@@ -55,7 +55,7 @@ class UserSerializer(DjoserUserSerializer):
         return bool(
             current_user.id
             and Subscription.objects.filter(
-                subscriber=obj, user=current_user).exists()
+                subscriber=current_user, user=obj).exists()
         )
 
     def get_avatar(self, obj):

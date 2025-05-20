@@ -56,10 +56,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_short_link(self, request, *args, **kwargs):
         """Action для получения короткой ссылки."""
-        current_url = request.build_absolute_uri().split('/api')[0]
+        host = request.get_host()
         link = self.get_object().link
         return Response(
-            data={'get-link': f'{current_url}/{link}'},
+            data={'short-link': f'http://{host}/s/{link}'},
             status=status.HTTP_200_OK
         )
 
@@ -132,7 +132,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def recipe_redirect_view(request, short_link):
     """Редирект на рецепт по короткой ссылке."""
     recipe = get_object_or_404(Recipe, link=short_link)
-    return redirect(f'/api/recipes/{recipe.id}')
+    return redirect(f'/recipes/{recipe.id}')
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -174,7 +174,7 @@ class UsersViewSet(UserViewSet):
     def subscribtions(self, request, *args, **kwargs):
         """Action для отображения подписок пользователя."""
         user = User.objects.filter(
-            subscriber__user=request.user
+            subscriptions__subscriber=request.user
         ).prefetch_related('recipes')
         print(user)
         page = self.paginate_queryset(user)

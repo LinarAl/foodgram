@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path('s/<slug:short_link>', recipe_redirect_view),
     path('admin/', admin.site.urls),
-    path('<slug:short_link>', recipe_redirect_view),
     path('api/', include('api.urls')),
 ]
