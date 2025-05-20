@@ -1,4 +1,5 @@
 """Сериализатор для избранного."""
+
 from recipes.models import Favorites
 from rest_framework import serializers
 
