@@ -124,7 +124,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: ./infra/docker-compose.production.yml
-        target: ${{ secrets.PROJECT_PATH }}/infra
+        target: ${{ secrets.PROJECT_PATH }}
     - name: Copy nginx.conf via ssh
       uses: appleboy/scp-action@master
       with:
@@ -133,7 +133,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: ./infra/nginx.conf
-        target: ${{ secrets.PROJECT_PATH }}/infra
+        target: ${{ secrets.PROJECT_PATH }}
     - name: Copy docs via ssh
       uses: appleboy/scp-action@master
       with:
