@@ -188,7 +188,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # fixture path
-FIXTURE_PATH = BASE_DIR.parent / 'data'
+FIXTURE_PATH = BASE_DIR / 'fixtures_data'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
