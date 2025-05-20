@@ -14,7 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from api.v1.views import recipe_redirect_view
+from api.v1.views.recipe_view import recipe_redirect_view
 from django.contrib import admin
 from django.urls import include, path
 
