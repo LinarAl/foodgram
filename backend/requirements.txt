@@ -14,8 +14,10 @@ djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
 djoser==2.3.1
 flake8==7.2.0
+flake8-isort==6.0.0
 idna==3.10
 iniconfig==2.1.0
+isort==5.13.2
 mccabe==0.7.0
 oauthlib==3.2.2
 packaging==25.0
