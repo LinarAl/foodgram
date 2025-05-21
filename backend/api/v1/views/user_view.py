@@ -25,6 +25,12 @@ class UsersViewSet(UserViewSet):
     http_method_names = ('get', 'post', 'put', 'delete')
     permission_classes = (IsAdminOrReadOnly, IsAuthorOrReadOnly)
 
+    @action(detail=False, methods=['get'],
+            permission_classes=[IsAuthenticated])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['put', 'delete'],
             permission_classes=[IsAuthenticated], url_path='me/avatar')
     def avatar(self, request):
