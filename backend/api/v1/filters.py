@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, Value, When
 from django_filters import rest_framework
 from recipes.models import Ingredient, Recipe, Tag
 
@@ -48,7 +48,14 @@ class IngredientFilter(rest_framework.FilterSet):
     def filter_name_istartswith_icontains(self, queryset, name, value):
         return queryset.filter(
             Q(name__istartswith=value) | Q(name__icontains=value)
-        )
+        ).annotate(
+            match_priority=Case(
+                When(name__istartswith=value, then=Value(1)),
+                When(name__icontains=value, then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            )
+        ).order_by('match_priority', 'name')
 
     class Meta:
         model = Ingredient
