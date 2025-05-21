@@ -29,7 +29,7 @@ class UsersViewSet(UserViewSet):
             permission_classes=[IsAuthenticated])
     def me(self, request):
         serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['put', 'delete'],
             permission_classes=[IsAuthenticated], url_path='me/avatar')
