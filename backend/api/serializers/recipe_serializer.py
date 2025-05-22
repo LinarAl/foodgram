@@ -3,7 +3,6 @@ from django.conf import settings
 from django.db import transaction
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from ..validators import validate_unique_data
 from .image_serializer import Base64ImageField

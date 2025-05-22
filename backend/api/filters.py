@@ -7,7 +7,7 @@ from recipes.models import Ingredient, Recipe, Tag
 class RecipeFilter(rest_framework.FilterSet):
     """Фильтрация рецепта по автору, тегам и ингредиентам."""
 
-    author_id = rest_framework.NumberFilter(
+    author = rest_framework.NumberFilter(
         field_name='author_id',
         lookup_expr='exact'
     )
@@ -32,7 +32,7 @@ class RecipeFilter(rest_framework.FilterSet):
     class Meta:
         model = Recipe
         fields = (
-            'is_favorited', 'is_in_shopping_cart', 'author_id', 'tags',
+            'is_favorited', 'is_in_shopping_cart', 'author', 'tags',
             'ingredients')
 
     def filter_ingredients_icontains(self, queryset, name, value):
