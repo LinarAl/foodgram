@@ -1,9 +1,9 @@
-from api.validators import validator_forbidden_name
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from api.validators import validator_forbidden_name
 from foodgram_backend.constants import (FIRST_NAME_FIELD_LENGTH,
                                         LAST_NAME_FIELD_LENGTH,
                                         USERNAME_FIELD_LENGTH)

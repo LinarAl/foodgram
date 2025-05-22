@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from foodgram_backend.constants import OBJECTS_PER_PAGE
+
 from .models import (Favorites, Ingredient, Recipe, RecipeIngredient,
                      ShoppingList, Tag)
 

@@ -14,9 +14,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from api.views import recipe_redirect_view
 from django.contrib import admin
 from django.urls import include, path
+
+from api.views import recipe_redirect_view
 
 urlpatterns = [
     path('s/<slug:short_link>', recipe_redirect_view),

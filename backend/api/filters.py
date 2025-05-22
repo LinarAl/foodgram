@@ -1,6 +1,7 @@
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.utils.translation import gettext_lazy as _
 from django_filters import rest_framework
+
 from recipes.models import Ingredient, Recipe, Tag
 
 
