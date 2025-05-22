@@ -42,11 +42,9 @@ class UsersViewSet(UserViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        elif request.method == 'DELETE' and user.avatar:
-            user.avatar.delete()
-            user.save()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        user.avatar.delete()
+        user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'], url_path='subscriptions',
             permission_classes=[IsAuthenticated])
@@ -55,7 +53,6 @@ class UsersViewSet(UserViewSet):
         user = User.objects.filter(
             subscriptions__subscriber=request.user
         ).prefetch_related('recipes')
-        print(user)
         page = self.paginate_queryset(user)
         serializer = SubscriptionSerializer(
             page, many=True, context={'request': request})
@@ -66,7 +63,6 @@ class UsersViewSet(UserViewSet):
     def subscribe(self, request, *args, **kwargs):
         """Action для подписки и отписки на пользователя."""
         user = self.get_object()
-        print(user)
         if self.request.method == 'POST':
             serializer = SubscriptionCreateSerializer(
                 data={'user': user.id, 'subscriber': request.user.id},
@@ -75,11 +71,10 @@ class UsersViewSet(UserViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif self.request.method == 'DELETE':
-            deleted, _ = Subscription.objects.filter(
-                user=user,
-                subscriber=request.user
-            ).delete()
-            if deleted:
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        deleted, _ = Subscription.objects.filter(
+            user=user,
+            subscriber=request.user
+        ).delete()
+        if deleted:
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)

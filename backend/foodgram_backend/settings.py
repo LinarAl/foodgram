@@ -155,6 +155,9 @@ DEFAULT_PAGE_SIZE = 10
 BATCH_SIZE = 100
 # SubscriptionSerializer base recipes_limit
 BASE_RECIPES_LIMIT_SUBSCRIPTION = 5
+# Admin zone
+# recipes
+OBJECTS_PER_PAGE = 30
 
 
 # Recipes settings: Ingredient UnitChoices

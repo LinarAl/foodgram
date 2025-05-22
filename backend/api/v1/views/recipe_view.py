@@ -53,25 +53,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post', 'delete'], url_path='shopping_cart',
-            permission_classes=[IsAuthenticated])
-    def shopping_cart(self, request, *args, **kwargs):
-        """Action для добавления и удаления рецепта в список покупок."""
-        if self.request.method == 'POST':
-            serializer = ShoppingListSerializer(
-                data={'recipe': self.get_object().id, 'user': request.user.id}
+    @staticmethod
+    def create_delete_shopping_cart_favorites(
+            request_method, current_serializer, recipe, user):
+        """Метод добавления и удаления рецепта в списка покупок и избранное."""
+        if request_method == 'POST':
+            serializer = current_serializer(
+                data={'recipe': recipe.id, 'user': user.id}
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save(user=request.user)
+            serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif self.request.method == 'DELETE':
+        else:
             deleted, _ = ShoppingList.objects.filter(
-                user=request.user,
-                recipe=self.get_object()
+                user=user,
+                recipe=recipe
             ).delete()
             if deleted:
                 return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='shopping_cart',
+            permission_classes=[IsAuthenticated])
+    def shopping_cart(self, request, *args, **kwargs):
+        """Action для добавления и удаления рецепта в список покупок."""
+        return self.create_delete_shopping_cart_favorites(
+            self.request.method,
+            ShoppingListSerializer,
+            self.get_object(),
+            request.user
+        )
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart',
             permission_classes=[IsAuthenticated])
@@ -102,21 +113,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def favorites(self, request, *args, **kwargs):
         """Action для добавления и удаления рецепта в избранное."""
-        if self.request.method == 'POST':
-            serializer = FavoritesSerializer(
-                data={'recipe': self.get_object().id, 'user': request.user.id}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif self.request.method == 'DELETE':
-            deleted, _ = Favorites.objects.filter(
-                user=request.user,
-                recipe=self.get_object()
-            ).delete()
-            if deleted:
-                return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return self.create_delete_shopping_cart_favorites(
+            self.request.method,
+            FavoritesSerializer,
+            self.get_object(),
+            request.user
+        )
 
 
 def recipe_redirect_view(request, short_link):

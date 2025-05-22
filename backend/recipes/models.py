@@ -70,12 +70,18 @@ class Ingredient(AbstractNameModel):
         verbose_name=_('Дата создания')
     )
 
-    def __str__(self):
-        return f'{self.name} {self.measurement_unit}'
-
     class Meta:
         verbose_name = _('Ингридиент')
         verbose_name_plural = _('Ингридиенты')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_measurement_unit'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.name} {self.measurement_unit}'
 
 
 class RecipeIngredient(models.Model):
@@ -93,7 +99,7 @@ class RecipeIngredient(models.Model):
         verbose_name=_('Ингридиент'),
 
     )
-    amount = models.IntegerField(
+    amount = models.PositiveIntegerField(
         verbose_name=_('Количество'),
         validators=[
             MinValueValidator(
@@ -155,7 +161,7 @@ class Recipe(AbstractNameModel):
         Tag,
         verbose_name=_('Тег')
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveIntegerField(
         verbose_name=_('Время приготовления в минутах'),
         validators=[
             MinValueValidator(
@@ -222,6 +228,12 @@ class AbstractUserRecipesModel(models.Model):
 
     class Meta:
         abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='%(app_label)s_%(class)s_unique_user_recipe'
+            )
+        ]
 
     def __str__(self):
         return f'Пользователь: {self.user}'
@@ -230,13 +242,7 @@ class AbstractUserRecipesModel(models.Model):
 class ShoppingList(AbstractUserRecipesModel):
     """Модель списка покупок."""
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_shopping_list'
-            )
-        ]
+    class Meta(AbstractUserRecipesModel.Meta):
         verbose_name = _('Список покупок')
         verbose_name_plural = _('Список покупок')
         default_related_name = 'shopping_list'
@@ -246,13 +252,7 @@ class ShoppingList(AbstractUserRecipesModel):
 class Favorites(AbstractUserRecipesModel):
     """Модель избранного."""
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_favorites'
-            )
-        ]
+    class Meta(AbstractUserRecipesModel.Meta):
         verbose_name = _('Избранное')
         verbose_name_plural = _('Избранное')
         default_related_name = 'favorites'

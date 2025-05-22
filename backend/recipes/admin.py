@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 
 from .models import (Favorites, Ingredient, Recipe, RecipeIngredient,
@@ -74,10 +75,9 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ('author__username', 'name')
     list_filter = ('tags',)
 
+    @admin.display(description='В избранном (кол-во)')
     def favorites_count(self, obj):
         return obj.favorites.count()
-
-    favorites_count.short_description = 'В избранном (кол-во)'
 
 
 @admin.register(Favorites)
@@ -96,7 +96,7 @@ class FavoritesAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user',)
-    list_per_page = 30
+    list_per_page = settings.OBJECTS_PER_PAGE
 
 
 @admin.register(ShoppingList)
@@ -115,4 +115,4 @@ class ShoppingListAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user',)
-    list_per_page = 30
+    list_per_page = settings.OBJECTS_PER_PAGE
