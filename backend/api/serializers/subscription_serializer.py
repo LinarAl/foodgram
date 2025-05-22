@@ -1,8 +1,8 @@
 """Сериализатор для подписок."""
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from foodgram_backend.constants import BASE_RECIPES_LIMIT_SUBSCRIPTION
 from users.models import Subscription
 from .recipe_serializer import ShortRecipeSerializer
 from .user_serializer import UserSerializer
@@ -24,7 +24,7 @@ class SubscriptionSerializer(UserSerializer):
     def get_recipes_limit(self):
         """Устанавливаем лимит для рецептов."""
         request = self.context.get('request')
-        limit = settings.BASE_RECIPES_LIMIT_SUBSCRIPTION
+        limit = BASE_RECIPES_LIMIT_SUBSCRIPTION
         if not request:
             return limit
         try:

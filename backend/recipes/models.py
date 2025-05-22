@@ -1,10 +1,23 @@
 """Модели приложения recipes."""
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+
+from foodgram_backend.constants import (AMOUNT_INGREDIENT_FIELD_MAX,
+                                        AMOUNT_INGREDIENT_FIELD_MIN,
+                                        COOKING_TIME_FIELD_MAX,
+                                        COOKING_TIME_FIELD_MIN, CUP_UNIT,
+                                        DROP_UNIT, GRAMS_UNIT, JAR_UNIT,
+                                        LINK_FIELD_MAX_LENGTH,
+                                        MEASUREMENT_UNIT_FIELD_MAX_LENGTH,
+                                        MILLILITERS_UNIT, PINCH_UNIT,
+                                        QUANTITY_UNIT,
+                                        RECIPE_NAME_FIELD_MAX_LENGTH,
+                                        SLUG_FIELD_MAX_LENGTH, TABLESPOON_UNIT,
+                                        TEASPOON_UNIT, TITLE_FIELD_MAX_LENGTH,
+                                        TO_TASTE_UNIT)
 
 User = get_user_model()
 
@@ -13,7 +26,7 @@ class AbstractNameModel(models.Model):
     """Абстрактная модель с полем name."""
 
     name = models.CharField(
-        max_length=settings.TITLE_FIELD_MAX_LENGTH,
+        max_length=TITLE_FIELD_MAX_LENGTH,
         unique=True,
         verbose_name=_('Название')
     )
@@ -29,7 +42,7 @@ class Tag(AbstractNameModel):
     """Модель тега."""
 
     slug = models.SlugField(
-        max_length=settings.SLUG_FIELD_MAX_LENGTH,
+        max_length=SLUG_FIELD_MAX_LENGTH,
         unique=True,
         db_index=True,
         verbose_name=_('slug')
@@ -49,19 +62,19 @@ class Ingredient(AbstractNameModel):
     """Модель ингридиента."""
 
     class UnitChoices(models.TextChoices):
-        GRAMS = settings.GRAMS_UNIT, _('Граммы')
-        MILLILITERS = settings.MILLILITERS_UNIT, _('Миллилитры')
-        QUANTITY = settings.QUANTITY_UNIT, _('Количество в штуках')
-        TEASPOON = settings.TEASPOON_UNIT, _('Чайная ложка')
-        TABLESPOON = settings.TABLESPOON_UNIT, _('Столовая ложка')
-        PINCH = settings.PINCH_UNIT, _('Щепотка')
-        DROP = settings.DROP_UNIT, _('Капля')
-        CUP = settings.CUP_UNIT, _('Стакан')
-        JAR = settings.JAR_UNIT, _('Банка')
-        TO_TASTE = settings.TO_TASTE_UNIT, _('По вкусу')
+        GRAMS = GRAMS_UNIT, _('Граммы')
+        MILLILITERS = MILLILITERS_UNIT, _('Миллилитры')
+        QUANTITY = QUANTITY_UNIT, _('Количество в штуках')
+        TEASPOON = TEASPOON_UNIT, _('Чайная ложка')
+        TABLESPOON = TABLESPOON_UNIT, _('Столовая ложка')
+        PINCH = PINCH_UNIT, _('Щепотка')
+        DROP = DROP_UNIT, _('Капля')
+        CUP = CUP_UNIT, _('Стакан')
+        JAR = JAR_UNIT, _('Банка')
+        TO_TASTE = TO_TASTE_UNIT, _('По вкусу')
 
     measurement_unit = models.CharField(
-        max_length=settings.MEASUREMENT_UNIT_FIELD_MAX_LENGTH,
+        max_length=MEASUREMENT_UNIT_FIELD_MAX_LENGTH,
         choices=UnitChoices.choices,
         verbose_name=_('Единица измерения')
     )
@@ -103,16 +116,16 @@ class RecipeIngredient(models.Model):
         verbose_name=_('Количество'),
         validators=[
             MinValueValidator(
-                settings.AMOUNT_INGREDIENT_FIELD_MIN,
+                AMOUNT_INGREDIENT_FIELD_MIN,
                 message=_(
                     f'Значение должно быть меньше \n'
-                    f'{settings.AMOUNT_INGREDIENT_FIELD_MIN}')
+                    f'{AMOUNT_INGREDIENT_FIELD_MIN}')
             ),
             MaxValueValidator(
-                settings.AMOUNT_INGREDIENT_FIELD_MAX,
+                AMOUNT_INGREDIENT_FIELD_MAX,
                 message=_(
                     f'Значение должно быть больше \n'
-                    f'{settings.AMOUNT_INGREDIENT_FIELD_MAX}')
+                    f'{AMOUNT_INGREDIENT_FIELD_MAX}')
             )
         ]
     )
@@ -137,7 +150,7 @@ class Recipe(AbstractNameModel):
     """Модель рецепта."""
 
     name = models.CharField(
-        max_length=settings.RECIPE_NAME_FIELD_MAX_LENGTH,
+        max_length=RECIPE_NAME_FIELD_MAX_LENGTH,
         db_index=True,
         verbose_name=_('Название')
     )
@@ -165,21 +178,21 @@ class Recipe(AbstractNameModel):
         verbose_name=_('Время приготовления в минутах'),
         validators=[
             MinValueValidator(
-                settings.COOKING_TIME_FIELD_MIN,
+                COOKING_TIME_FIELD_MIN,
                 message=_(
                     f'Значение должно быть меньше \n'
-                    f'{settings.COOKING_TIME_FIELD_MIN}')
+                    f'{COOKING_TIME_FIELD_MIN}')
             ),
             MaxValueValidator(
-                settings.COOKING_TIME_FIELD_MAX,
+                COOKING_TIME_FIELD_MAX,
                 message=_(
                     f'Значение должно быть больше \n'
-                    f'{settings.COOKING_TIME_FIELD_MAX}')
+                    f'{COOKING_TIME_FIELD_MAX}')
             )
         ]
     )
     link = models.CharField(
-        max_length=settings.LINK_FIELD_MAX_LENGTH,
+        max_length=LINK_FIELD_MAX_LENGTH,
         unique=True,
         blank=True,
         verbose_name=_('Короткая ссылка')
@@ -201,10 +214,10 @@ class Recipe(AbstractNameModel):
     def save(self, *args, **kwargs):
         if not self.link:
             self.link = get_random_string(
-                length=settings.LINK_FIELD_MAX_LENGTH)
+                length=LINK_FIELD_MAX_LENGTH)
             while Recipe.objects.filter(link=self.link).exists():
                 self.link = get_random_string(
-                    length=settings.LINK_FIELD_MAX_LENGTH)
+                    length=LINK_FIELD_MAX_LENGTH)
         super().save(*args, **kwargs)
 
 

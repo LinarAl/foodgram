@@ -1,9 +1,12 @@
 """Сериализаторы рецепта."""
-from django.conf import settings
 from django.db import transaction
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
 
+from foodgram_backend.constants import (AMOUNT_INGREDIENT_FIELD_MAX,
+                                        AMOUNT_INGREDIENT_FIELD_MIN,
+                                        BATCH_SIZE, COOKING_TIME_FIELD_MAX,
+                                        COOKING_TIME_FIELD_MIN)
 from ..validators import validate_unique_data
 from .image_serializer import Base64ImageField
 from .tag_serializer import TagSerializer
@@ -17,8 +20,8 @@ class ShortRecipeIngredientSerializer(serializers.ModelSerializer):
         source='ingredient'
     )
     amount = serializers.IntegerField(
-        min_value=settings.AMOUNT_INGREDIENT_FIELD_MIN,
-        max_value=settings.AMOUNT_INGREDIENT_FIELD_MAX
+        min_value=AMOUNT_INGREDIENT_FIELD_MIN,
+        max_value=AMOUNT_INGREDIENT_FIELD_MAX
     )
 
     class Meta:
@@ -72,8 +75,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         many=True
     )
     cooking_time = serializers.IntegerField(
-        min_value=settings.COOKING_TIME_FIELD_MIN,
-        max_value=settings.COOKING_TIME_FIELD_MAX
+        min_value=COOKING_TIME_FIELD_MIN,
+        max_value=COOKING_TIME_FIELD_MAX
     )
     author = serializers.CharField(
         default=serializers.CurrentUserDefault()
@@ -94,7 +97,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def create_ingredients(ingredients: list, recipe,
-                           batch_size=settings.BATCH_SIZE):
+                           batch_size=BATCH_SIZE):
         """Создание ингредиентов с помощью bulk_create."""
         RecipeIngredient.objects.bulk_create(
             [

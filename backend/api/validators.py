@@ -1,12 +1,13 @@
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from rest_framework.serializers import \
     ValidationError as SerializersValidationError
 
+from foodgram_backend.constants import FORBIDDEN_USERNAMES
+
 
 def validator_forbidden_name(username):
     """Сверяет имя пользователя со списком запрещенных имен."""
-    if username.lower() in settings.FORBIDDEN_USERNAMES:
+    if username.lower() in FORBIDDEN_USERNAMES:
         raise ValidationError(
             f'Имя пользователя {username} запрещено')
 

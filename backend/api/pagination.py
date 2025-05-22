@@ -1,9 +1,10 @@
 """Пагинация API."""
-from django.conf import settings
 from rest_framework.pagination import LimitOffsetPagination
+
+from foodgram_backend.constants import DEFAULT_PAGE_SIZE
 
 
 class BaseLimitOffsetPagination(LimitOffsetPagination):
     """Базовый класс пагинации."""
 
-    default_limit = settings.DEFAULT_PAGE_SIZE
+    default_limit = DEFAULT_PAGE_SIZE

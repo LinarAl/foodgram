@@ -1,6 +1,6 @@
-from django.conf import settings
 from django.contrib import admin
 
+from foodgram_backend.constants import OBJECTS_PER_PAGE
 from .models import (Favorites, Ingredient, Recipe, RecipeIngredient,
                      ShoppingList, Tag)
 
@@ -96,7 +96,7 @@ class FavoritesAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user',)
-    list_per_page = settings.OBJECTS_PER_PAGE
+    list_per_page = OBJECTS_PER_PAGE
 
 
 @admin.register(ShoppingList)
@@ -115,4 +115,4 @@ class ShoppingListAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user',)
-    list_per_page = settings.OBJECTS_PER_PAGE
+    list_per_page = OBJECTS_PER_PAGE

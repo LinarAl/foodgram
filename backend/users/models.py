@@ -1,16 +1,19 @@
 from api.validators import validator_forbidden_name
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+from foodgram_backend.constants import (FIRST_NAME_FIELD_LENGTH,
+                                        LAST_NAME_FIELD_LENGTH,
+                                        USERNAME_FIELD_LENGTH)
 
 
 class User(AbstractUser):
     """Расширенная модель пользователя."""
 
     username = models.CharField(
-        max_length=settings.USERNAME_FIELD_LENGTH,
+        max_length=USERNAME_FIELD_LENGTH,
         unique=True,
         validators=[
             UnicodeUsernameValidator(),
@@ -23,11 +26,11 @@ class User(AbstractUser):
         verbose_name=_('Адрес электронной почты')
     )
     first_name = models.CharField(
-        max_length=settings.FIRST_NAME_FIELD_LENGTH,
+        max_length=FIRST_NAME_FIELD_LENGTH,
         verbose_name=_('Имя пользователя')
     )
     last_name = models.CharField(
-        max_length=settings.LAST_NAME_FIELD_LENGTH,
+        max_length=LAST_NAME_FIELD_LENGTH,
         verbose_name=_('Фамилия пользователя')
     )
     avatar = models.ImageField(
