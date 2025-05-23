@@ -27,7 +27,10 @@ BATCH_SIZE = 100
 # subscription base recipes_limit
 BASE_RECIPES_LIMIT_SUBSCRIPTION = 5
 # Pagination
-DEFAULT_PAGE_SIZE = 10
+DEFAULT_PAGE_SIZE = 6
+PAGE_SIZE_PARAM = 'page'
+PAGE_SIZE_QUERY_PARAM = 'limit'
+PAGE_SIZE_MAX_LIMIT = 100
 # Admin zone
 # recipes
 OBJECTS_PER_PAGE = 30
