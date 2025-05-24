@@ -57,7 +57,7 @@ class UserSerializer(DjoserUserSerializer):
 
     def get_is_subscribed(self, obj):
         current_user = self.context['request'].user
-        return bool(
+        return (
             current_user.id
             and Subscription.objects.filter(
                 subscriber=current_user, user=obj).exists()
@@ -241,7 +241,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request', None)
-        return bool(
+        return (
             request
             and request.user.is_authenticated
             and obj.shopping_list.filter(user=request.user.id).exists()
